@@ -1,0 +1,18 @@
+{
+ "sources": [
+  {
+   "source": "airbnb",
+   "ok": false,
+   "error": "AIRBNB_ICS_URL is not set",
+   "bookings": 0
+  },
+  {
+   "source": "vrbo",
+   "ok": false,
+   "error": "VRBO_ICS_URL is not set",
+   "bookings": 0
+  }
+ ],
+ "direct_bookings": 0,
+ "double_bookings": []
+}
