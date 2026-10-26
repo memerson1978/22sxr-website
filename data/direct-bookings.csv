@@ -1,0 +1,5 @@
+# Direct bookings for 22 Saxonbury Road (website, Simply Owners, returning guests, owner stays).
+# DATES ONLY. This file is public: never put guest names, phone numbers or prices here.
+# Names and prices live in the private booking sheet. depart = checkout day.
+# type: WEBS (website), SO (Simply Owners), RTN (returning guest), US (owner stay or maintenance block)
+arrive,depart,type
