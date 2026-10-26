@@ -9,6 +9,12 @@
    "source": "vrbo",
    "ok": true,
    "bookings": 1
+  },
+  {
+   "source": "simplyowners",
+   "ok": false,
+   "error": "SIMPLYOWNERS_ICS_URL is not set",
+   "bookings": 0
   }
  ],
  "direct_bookings": 0,
