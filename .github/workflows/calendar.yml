@@ -1,11 +1,11 @@
 name: Master calendar
 
-# Every hour: read the Airbnb and Vrbo calendars, add direct bookings,
+# Every 2 hours: read the Airbnb, Vrbo and Simply Owners calendars, add direct bookings,
 # and publish the merged feeds in calendar/. Also runs straight away
 # whenever data/direct-bookings.csv changes.
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "17 */2 * * *"
   push:
     branches: [main]
     paths:
@@ -36,6 +36,7 @@ jobs:
         env:
           AIRBNB_ICS_URL: ${{ secrets.AIRBNB_ICS_URL }}
           VRBO_ICS_URL: ${{ secrets.VRBO_ICS_URL }}
+          SIMPLYOWNERS_ICS_URL: ${{ secrets.SIMPLYOWNERS_ICS_URL }}
           TZ: Europe/London
         run: python3 scripts/build_calendar.py
 

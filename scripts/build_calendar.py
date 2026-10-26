@@ -5,8 +5,9 @@ Reads the Airbnb and Vrbo calendar feeds (URLs come from environment
 variables, stored as GitHub Actions secrets) plus data/direct-bookings.csv,
 and writes:
 
-  calendar/for-airbnb.ics   Vrbo + direct bookings   (Airbnb imports this)
-  calendar/for-vrbo.ics     Airbnb + direct bookings (Vrbo imports this)
+  calendar/for-airbnb.ics   Vrbo + direct bookings   (Airbnb imports this;
+                            it imports Simply Owners separately)
+  calendar/for-vrbo.ics     Airbnb + Simply Owners + direct (Vrbo imports this)
   calendar/master.ics       every booking, labelled by source
   calendar/availability.json  booked date ranges for the website calendar
   calendar/status.json      when each source was last read successfully
@@ -40,6 +41,7 @@ UA = "Mozilla/5.0 (22sxr-calendar; +https://github.com/memerson1978/22sxr-websit
 SOURCES = {
     "airbnb": "AIRBNB_ICS_URL",
     "vrbo": "VRBO_ICS_URL",
+    "simplyowners": "SIMPLYOWNERS_ICS_URL",
 }
 
 
@@ -181,7 +183,8 @@ def ics(events: list[dict], name: str, labelled: bool) -> str:
     lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//22sxr//master calendar//EN",
              "CALSCALE:GREGORIAN", "METHOD:PUBLISH", f"X-WR-CALNAME:{name}"]
     for e in sorted(events, key=lambda x: (x["start"], x["source"])):
-        label = {"airbnb": "Airbnb", "vrbo": "Vrbo", "direct": "Direct"}[e["source"]]
+        label = {"airbnb": "Airbnb", "vrbo": "Vrbo", "simplyowners": "Simply Owners",
+                 "direct": "Direct"}[e["source"]]
         summary = f"Booked ({label})" if labelled else "Booked"
         uid = f"{e['source']}-{e['start']:%Y%m%d}-{e['end']:%Y%m%d}@22sxr"
         lines += ["BEGIN:VEVENT", f"UID:{uid}", f"DTSTAMP:{e['start']:%Y%m%d}T000000Z",
@@ -210,7 +213,9 @@ def overlaps(events: list[dict]) -> list[str]:
         for b in ev[i + 1:]:
             if b["start"] >= a["end"]:
                 break
-            if a["source"] != b["source"]:
+            # The Simply Owners calendar has often mirrored bookings taken elsewhere,
+            # so an overlap with it is not treated as a double booking.
+            if a["source"] != b["source"] and "simplyowners" not in (a["source"], b["source"]):
                 issues.append(f"{a['source']} {a['start']}..{a['end']} overlaps "
                               f"{b['source']} {b['start']}..{b['end']}")
     return issues
@@ -239,10 +244,12 @@ def main() -> int:
         return [e for e in evs if e["end"] >= keep_from]
 
     airbnb, vrbo, direct = recent(feeds["airbnb"]), recent(feeds["vrbo"]), recent(direct)
-    everything = airbnb + vrbo + direct
+    so = recent(feeds["simplyowners"])
+    everything = airbnb + vrbo + so + direct
 
+    # Airbnb already imports the Simply Owners calendar directly, so it is left out of Airbnb's feed.
     write_if_changed(OUT / "for-airbnb.ics", ics(vrbo + direct, f"{PROPERTY} (for Airbnb)", False))
-    write_if_changed(OUT / "for-vrbo.ics", ics(airbnb + direct, f"{PROPERTY} (for Vrbo)", False))
+    write_if_changed(OUT / "for-vrbo.ics", ics(airbnb + so + direct, f"{PROPERTY} (for Vrbo)", False))
     write_if_changed(OUT / "master.ics", ics(everything, f"{PROPERTY} master", True))
     write_if_changed(OUT / "availability.json", json.dumps(
         {"property": PROPERTY, "booked": merge_ranges(future(everything, day))}, indent=1) + "\n")

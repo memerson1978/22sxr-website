@@ -4,13 +4,13 @@ Website and master booking calendar for 22 Saxonbury Road, Southbourne.
 
 ## Master calendar
 
-Every hour, GitHub reads the Airbnb and Vrbo calendars, adds the direct bookings in
+Every 2 hours, GitHub reads the Airbnb, Vrbo and Simply Owners calendars, adds the direct bookings in
 `data/direct-bookings.csv`, and publishes the results in `calendar/`:
 
 | File | Who uses it | Contains |
 |---|---|---|
-| `calendar/for-airbnb.ics` | Imported by Airbnb | Vrbo + direct bookings |
-| `calendar/for-vrbo.ics` | Imported by Vrbo | Airbnb + direct bookings |
+| `calendar/for-airbnb.ics` | Imported by Airbnb | Vrbo + direct bookings (Airbnb imports Simply Owners itself) |
+| `calendar/for-vrbo.ics` | Imported by Vrbo | Airbnb + Simply Owners + direct bookings |
 | `calendar/master.ics` | Owner, morning check, cleaner | Every booking, labelled Airbnb, Vrbo or Direct |
 | `calendar/availability.json` | Website availability calendar | Booked date ranges only |
 | `calendar/status.json` | Morning check | Whether each feed was read, double bookings |
@@ -39,5 +39,5 @@ the run is marked as failed and GitHub emails the owner.
 
 ### Settings
 
-The Airbnb and Vrbo export links are stored as repository secrets
-`AIRBNB_ICS_URL` and `VRBO_ICS_URL` (Settings, Secrets and variables, Actions).
+The Airbnb, Vrbo and Simply Owners export links are stored as repository secrets
+`AIRBNB_ICS_URL`, `VRBO_ICS_URL` and `SIMPLYOWNERS_ICS_URL` (Settings, Secrets and variables, Actions).
