@@ -160,6 +160,10 @@ def get_source(source: str, env: str, day: dt.date, now: str) -> tuple[list[dict
     url = os.environ.get(env, "").strip()
     cached = load_cache(source)
     status = {"source": source}
+    if not url and cached is None:
+        # Source not configured and nothing cached: contribute nothing, don't fail the run.
+        status.update(ok=True, configured=False, bookings=0)
+        return [], status
     try:
         if not url:
             raise RuntimeError(f"{env} is not set")
