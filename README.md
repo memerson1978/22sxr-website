@@ -4,7 +4,7 @@ Website and master booking calendar for 22 Saxonbury Road, Southbourne.
 
 ## Master calendar
 
-Every 2 hours from 6am to 10pm UK time, GitHub reads the Airbnb, Vrbo and Simply Owners calendars, adds the direct bookings in
+Every hour from 6am to 10pm UK time, GitHub reads the Airbnb, Vrbo and Simply Owners calendars, adds the direct bookings in
 `data/direct-bookings.csv`, and publishes the results in `calendar/`:
 
 | File | Who uses it | Contains |

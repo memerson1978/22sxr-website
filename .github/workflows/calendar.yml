@@ -1,6 +1,6 @@
 name: Master calendar
 
-# Every 2 hours from 6am to 10pm UK time (none overnight): read the Airbnb, Vrbo and
+# Every hour from 6am to 10pm UK time (none overnight): read the Airbnb, Vrbo and
 # Simply Owners calendars, add direct bookings, and publish the merged feeds in calendar/.
 # Also runs straight away whenever data/direct-bookings.csv changes, or when run by hand.
 # GitHub schedules are in UTC only, so the job wakes hourly and the first step decides
@@ -32,7 +32,7 @@ jobs:
         run: |
           hour=$(TZ=Europe/London date +%-H)
           if [ "${{ github.event_name }}" != "schedule" ]; then run=true
-          elif [ "$hour" -ge 6 ] && [ "$hour" -le 22 ] && [ $((hour % 2)) -eq 0 ]; then run=true
+          elif [ "$hour" -ge 6 ] && [ "$hour" -le 22 ]; then run=true
           else run=false; fi
           echo "UK hour $hour, run=$run"
           echo "run=$run" >> "$GITHUB_OUTPUT"
