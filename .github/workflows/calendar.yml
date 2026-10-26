@@ -1,11 +1,13 @@
 name: Master calendar
 
-# Every 2 hours: read the Airbnb, Vrbo and Simply Owners calendars, add direct bookings,
-# and publish the merged feeds in calendar/. Also runs straight away
-# whenever data/direct-bookings.csv changes.
+# Every 2 hours from 6am to 10pm UK time (none overnight): read the Airbnb, Vrbo and
+# Simply Owners calendars, add direct bookings, and publish the merged feeds in calendar/.
+# Also runs straight away whenever data/direct-bookings.csv changes, or when run by hand.
+# GitHub schedules are in UTC only, so the job wakes hourly and the first step decides
+# from the UK clock (including British Summer Time) whether this is a run hour.
 on:
   schedule:
-    - cron: "17 */2 * * *"
+    - cron: "17 * * * *"
   push:
     branches: [main]
     paths:
@@ -25,14 +27,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check UK time
+        id: when
+        run: |
+          hour=$(TZ=Europe/London date +%-H)
+          if [ "${{ github.event_name }}" != "schedule" ]; then run=true
+          elif [ "$hour" -ge 6 ] && [ "$hour" -le 22 ] && [ $((hour % 2)) -eq 0 ]; then run=true
+          else run=false; fi
+          echo "UK hour $hour, run=$run"
+          echo "run=$run" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
+        if: steps.when.outputs.run == 'true'
 
       - uses: actions/setup-python@v5
+        if: steps.when.outputs.run == 'true'
         with:
           python-version: "3.12"
 
       - name: Build calendar
         id: build
+        if: steps.when.outputs.run == 'true'
         env:
           AIRBNB_ICS_URL: ${{ secrets.AIRBNB_ICS_URL }}
           VRBO_ICS_URL: ${{ secrets.VRBO_ICS_URL }}
@@ -41,7 +56,7 @@ jobs:
         run: python3 scripts/build_calendar.py
 
       - name: Save changes
-        if: always()
+        if: always() && steps.when.outputs.run == 'true'
         run: |
           git config user.name "22sxr calendar"
           git config user.email "actions@users.noreply.github.com"
