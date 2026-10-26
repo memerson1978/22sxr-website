@@ -2,15 +2,13 @@
  "sources": [
   {
    "source": "airbnb",
-   "ok": false,
-   "error": "AIRBNB_ICS_URL is not set",
-   "bookings": 0
+   "ok": true,
+   "bookings": 6
   },
   {
    "source": "vrbo",
-   "ok": false,
-   "error": "VRBO_ICS_URL is not set",
-   "bookings": 0
+   "ok": true,
+   "bookings": 1
   }
  ],
  "direct_bookings": 0,
