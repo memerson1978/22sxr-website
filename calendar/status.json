@@ -2,7 +2,9 @@
  "sources": [
   {
    "source": "airbnb",
-   "ok": true,
+   "ok": false,
+   "error": "HTTP Error 429: Too Many Requests",
+   "using_copy_from": "2026-10-30T05:12:12",
    "bookings": 6
   },
   {
