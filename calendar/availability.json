@@ -2,6 +2,10 @@
  "property": "22 Saxonbury Road, Southbourne",
  "booked": [
   {
+   "from": "2026-11-21",
+   "to": "2026-11-23"
+  },
+  {
    "from": "2026-12-11",
    "to": "2026-12-13"
   },
