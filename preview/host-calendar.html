@@ -1,0 +1,439 @@
+<title>22 SXR Calendar</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+  /* Layout: a single centered column — status strip, month grid, upcoming list. */
+  :root {
+    --bg: #f6f5f2;
+    --surface: #ffffff;
+    --ink: #1c1a17;
+    --muted: #6f6a62;
+    --line: #e3e0d9;
+    --today: #2f2b26;
+    --airbnb: #e0485f;
+    --airbnb-soft: #f7dfe2;
+    --vrbo: #3f6cc4;
+    --vrbo-soft: #dbe4f5;
+    --direct: #2f8f6b;
+    --direct-soft: #d6ece2;
+    --owner: #9a7b2e;
+    --owner-soft: #efe6cf;
+    --ok: #2f8f6b;
+    --warn: #c2762a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #171614;
+      --surface: #201e1b;
+      --ink: #efece6;
+      --muted: #a39d93;
+      --line: #322f2a;
+      --today: #efece6;
+      --airbnb: #ef6c80;
+      --airbnb-soft: #412127;
+      --vrbo: #7ea0e0;
+      --vrbo-soft: #1f2a3f;
+      --direct: #5bbf94;
+      --direct-soft: #1c3329;
+      --owner: #d4af5a;
+      --owner-soft: #352c17;
+      --ok: #5bbf94;
+      --warn: #d99a4e;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #171614;
+    --surface: #201e1b;
+    --ink: #efece6;
+    --muted: #a39d93;
+    --line: #322f2a;
+    --today: #efece6;
+    --airbnb: #ef6c80;
+    --airbnb-soft: #412127;
+    --vrbo: #7ea0e0;
+    --vrbo-soft: #1f2a3f;
+    --direct: #5bbf94;
+    --direct-soft: #1c3329;
+    --owner: #d4af5a;
+    --owner-soft: #352c17;
+    --ok: #5bbf94;
+    --warn: #d99a4e;
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 28px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  header h1 {
+    font-size: 1.35rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+    text-wrap: balance;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 0.86rem; }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.82rem;
+    color: var(--muted);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); flex: none; }
+  .dot.warn { background: var(--warn); }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 16px;
+  }
+
+  .monthbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .monthbar h2 {
+    font-size: 1.05rem;
+    font-weight: 620;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .nav { display: flex; gap: 6px; }
+  .nav button, .today-btn {
+    font: inherit;
+    font-size: 0.85rem;
+    color: var(--ink);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    height: 34px;
+    min-width: 34px;
+    padding: 0 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .nav button:hover, .today-btn:hover { border-color: var(--muted); }
+  .nav button:focus-visible, .today-btn:focus-visible { outline: 2px solid var(--vrbo); outline-offset: 2px; }
+
+  .dow {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .dow span {
+    text-align: center;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 2px 0;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+  .cell {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    padding: 5px 6px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+  .cell.pad { background: transparent; }
+  .cell .num { font-size: 0.82rem; font-weight: 550; }
+  .cell.out .num { color: color-mix(in srgb, var(--muted) 60%, transparent); }
+  .cell.today .num {
+    background: var(--today);
+    color: var(--bg);
+    width: 1.5em; height: 1.5em;
+    display: inline-flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    font-weight: 650;
+  }
+  /* a booked night fills with the channel's soft colour; the left edge carries the channel bar */
+  .cell.booked { font-weight: 550; }
+  .cell.booked.airbnb { background: var(--airbnb-soft); }
+  .cell.booked.vrbo { background: var(--vrbo-soft); }
+  .cell.booked.direct { background: var(--direct-soft); }
+  .cell.booked.owner { background: var(--owner-soft); }
+  .cell.checkin { border-top-left-radius: 9px; border-bottom-left-radius: 9px; }
+  .cell.checkin::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 10%; bottom: 10%;
+    width: 3px; border-radius: 3px;
+  }
+  .cell.checkin.airbnb::before { background: var(--airbnb); }
+  .cell.checkin.vrbo::before { background: var(--vrbo); }
+  .cell.checkin.direct::before { background: var(--direct); }
+  .cell.checkin.owner::before { background: var(--owner); }
+  .tag {
+    font-size: 0.6rem;
+    font-weight: 650;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    align-self: flex-start;
+    line-height: 1.1;
+  }
+  .tag.airbnb { color: var(--airbnb); }
+  .tag.vrbo { color: var(--vrbo); }
+  .tag.direct { color: var(--direct); }
+  .tag.owner { color: var(--owner); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border-radius: 4px; flex: none; }
+  .sw.airbnb { background: var(--airbnb); }
+  .sw.vrbo { background: var(--vrbo); }
+  .sw.direct { background: var(--direct); }
+  .sw.owner { background: var(--owner); }
+
+  .up h3 { font-size: 0.95rem; margin: 0 0 10px; font-weight: 620; }
+  .up ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .up li {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.88rem;
+  }
+  .up li:last-child { border-bottom: none; }
+  .up .chip {
+    font-size: 0.64rem;
+    font-weight: 650;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 7px;
+    border-radius: 999px;
+    flex: none;
+  }
+  .up .chip.airbnb { background: var(--airbnb-soft); color: var(--airbnb); }
+  .up .chip.vrbo { background: var(--vrbo-soft); color: var(--vrbo); }
+  .up .chip.direct { background: var(--direct-soft); color: var(--direct); }
+  .up .chip.owner { background: var(--owner-soft); color: var(--owner); }
+  .up .dates { font-variant-numeric: tabular-nums; font-weight: 550; }
+  .up .nights { color: var(--muted); margin-left: auto; font-size: 0.8rem; white-space: nowrap; }
+
+  .foot { font-size: 0.76rem; color: var(--muted); line-height: 1.5; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>22 Saxonbury Road</h1>
+    <p>Master calendar across Airbnb, Vrbo and direct bookings</p>
+  </header>
+
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <span id="status">Loading the live calendar…</span>
+  </div>
+
+  <section class="card">
+    <div class="monthbar">
+      <h2 id="monthLabel">—</h2>
+      <div class="nav">
+        <button id="prev" aria-label="Previous month">‹</button>
+        <button class="today-btn" id="today">Today</button>
+        <button id="next" aria-label="Next month">›</button>
+      </div>
+    </div>
+    <div class="dow">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div style="height:14px"></div>
+    <div class="legend">
+      <span><i class="sw airbnb"></i> Airbnb</span>
+      <span><i class="sw vrbo"></i> Vrbo</span>
+      <span><i class="sw direct"></i> Direct</span>
+      <span><i class="sw owner"></i> Owner</span>
+    </div>
+  </section>
+
+  <section class="card up">
+    <h3>Upcoming stays</h3>
+    <ul id="upcoming"></ul>
+  </section>
+
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+  // Live feed published by the hourly GitHub job. Falls back to the snapshot below
+  // if the live file can't be reached (e.g. offline preview).
+  var FEED = "https://memerson1978.github.io/22sxr-website/calendar/master.ics";
+  var SNAPSHOT = [
+    { start: "2026-11-21", end: "2026-11-23", ch: "airbnb" },
+    { start: "2026-12-11", end: "2026-12-13", ch: "airbnb" },
+    { start: "2026-12-22", end: "2026-12-24", ch: "airbnb" },
+    { start: "2026-12-24", end: "2026-12-27", ch: "airbnb" },
+    { start: "2026-12-28", end: "2026-12-30", ch: "airbnb" },
+    { start: "2026-12-30", end: "2027-01-03", ch: "airbnb" },
+    { start: "2027-03-22", end: "2027-03-29", ch: "vrbo" }
+  ];
+
+  var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var CH_NAME = { airbnb: "Airbnb", vrbo: "Vrbo", direct: "Direct", owner: "Owner" };
+
+  function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0"); }
+  function parseDate(s) { var p = s.split("-"); return new Date(+p[0], +p[1]-1, +p[2]); }
+
+  function parseICS(text) {
+    var out = [], lines = text.replace(/\r\n/g, "\n").split("\n"), cur = null;
+    for (var i = 0; i < lines.length; i++) {
+      var ln = lines[i];
+      if (ln === "BEGIN:VEVENT") cur = {};
+      else if (ln === "END:VEVENT") { if (cur && cur.start && cur.end) out.push(cur); cur = null; }
+      else if (cur) {
+        var m;
+        if ((m = ln.match(/DTSTART[^:]*:(\d{4})(\d{2})(\d{2})/))) cur.start = m[1]+"-"+m[2]+"-"+m[3];
+        else if ((m = ln.match(/DTEND[^:]*:(\d{4})(\d{2})(\d{2})/))) cur.end = m[1]+"-"+m[2]+"-"+m[3];
+        else if ((m = ln.match(/SUMMARY:(.*)/))) {
+          var s = m[1].toLowerCase();
+          cur.ch = s.indexOf("vrbo")>-1 ? "vrbo" : s.indexOf("direct")>-1 ? "direct" : s.indexOf("owner")>-1 ? "owner" : "airbnb";
+        }
+      }
+    }
+    return out.map(function(e){ return { start: e.start, end: e.end, ch: e.ch || "airbnb" }; });
+  }
+
+  var state = { view: new Date(), bookings: [] };
+  state.view.setDate(1);
+
+  // night map: every booked night (check-in up to the night before checkout)
+  function nightInfo(bookings) {
+    var map = {};
+    bookings.forEach(function(b){
+      var d = parseDate(b.start), end = parseDate(b.end);
+      var first = true;
+      while (d < end) {
+        map[ymd(d)] = { ch: b.ch, checkin: first };
+        first = false;
+        d.setDate(d.getDate()+1);
+      }
+    });
+    return map;
+  }
+
+  function render() {
+    var y = state.view.getFullYear(), mo = state.view.getMonth();
+    document.getElementById("monthLabel").textContent = MONTHS[mo] + " " + y;
+    var nights = nightInfo(state.bookings);
+    var todayStr = ymd(new Date());
+
+    var first = new Date(y, mo, 1);
+    var startDow = (first.getDay() + 6) % 7; // Monday = 0
+    var gridStart = new Date(y, mo, 1 - startDow);
+    var grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    for (var i = 0; i < 42; i++) {
+      var d = new Date(gridStart.getFullYear(), gridStart.getMonth(), gridStart.getDate()+i);
+      var key = ymd(d);
+      var cell = document.createElement("div");
+      cell.className = "cell";
+      var inMonth = d.getMonth() === mo;
+      if (!inMonth) cell.classList.add("out");
+      var info = nights[key];
+      if (info) {
+        cell.classList.add("booked", info.ch);
+        if (info.checkin) cell.classList.add("checkin", info.ch);
+      }
+      if (key === todayStr) cell.classList.add("today");
+
+      var tag = (info && info.checkin)
+        ? '<span class="tag ' + info.ch + '">' + CH_NAME[info.ch] + '</span>'
+        : '<span class="tag">&nbsp;</span>';
+      cell.innerHTML = tag + '<span class="num">' + d.getDate() + '</span>';
+      grid.appendChild(cell);
+    }
+    // trim a trailing all-blank 6th week
+    renderUpcoming();
+  }
+
+  function fmt(d) {
+    return d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+  }
+  function renderUpcoming() {
+    var ul = document.getElementById("upcoming");
+    ul.innerHTML = "";
+    var today = new Date(); today.setHours(0,0,0,0);
+    var up = state.bookings.filter(function(b){ return parseDate(b.end) > today; })
+                           .sort(function(a,b){ return a.start < b.start ? -1 : 1; });
+    if (!up.length) { ul.innerHTML = '<li style="color:var(--muted)">No upcoming bookings.</li>'; return; }
+    up.forEach(function(b){
+      var s = parseDate(b.start), e = parseDate(b.end);
+      var n = Math.round((e - s) / 86400000);
+      var li = document.createElement("li");
+      li.innerHTML =
+        '<span class="chip ' + b.ch + '">' + CH_NAME[b.ch] + '</span>' +
+        '<span class="dates">' + fmt(s) + ' → ' + fmt(e) + '</span>' +
+        '<span class="nights">' + n + ' night' + (n===1?"":"s") + '</span>';
+      ul.appendChild(li);
+    });
+  }
+
+  function setStatus(ok, msg) {
+    document.getElementById("dot").className = "dot" + (ok ? "" : " warn");
+    document.getElementById("status").textContent = msg;
+  }
+
+  document.getElementById("prev").onclick = function(){ state.view.setMonth(state.view.getMonth()-1); render(); };
+  document.getElementById("next").onclick = function(){ state.view.setMonth(state.view.getMonth()+1); render(); };
+  document.getElementById("today").onclick = function(){ state.view = new Date(); state.view.setDate(1); render(); };
+
+  // start from the snapshot so the page is complete at rest, then upgrade to live
+  state.bookings = SNAPSHOT.slice();
+  render();
+  setStatus(true, "Showing the built-in snapshot…");
+  document.getElementById("foot").textContent =
+    "Reads the live feed published by the hourly job. Dates only — guest names and prices stay in the private booking sheet.";
+
+  fetch(FEED, { cache: "no-store" })
+    .then(function(r){ if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(function(t){
+      var live = parseICS(t);
+      var today = new Date(); today.setHours(0,0,0,0);
+      state.bookings = live.filter(function(b){ return parseDate(b.end) > today; });
+      render();
+      setStatus(true, "Live · updated hourly from Airbnb, Vrbo and direct bookings");
+    })
+    .catch(function(){
+      setStatus(false, "Showing the built-in snapshot (couldn't reach the live feed just now)");
+    });
+</script>
