@@ -171,6 +171,9 @@
     overflow: hidden;
   }
   .cell.out { background: color-mix(in srgb, var(--surface) 55%, var(--bg)); }
+  /* a manually blocked / unavailable day: light grey fill, date struck through */
+  .cell.blocked { background: color-mix(in srgb, var(--muted) 20%, var(--surface)); }
+  .cell.blocked .num { text-decoration: line-through; color: var(--muted); }
   .cell .num {
     position: relative;
     z-index: 2;
@@ -255,6 +258,7 @@
   .sw.vrbo { background: var(--vrbo); }
   .sw.direct { background: var(--direct); }
   .sw.owner { background: var(--owner); }
+  .sw.blocked { background: color-mix(in srgb, var(--muted) 45%, var(--surface)); border: 1px solid var(--line); }
 
   .up h3 { font-size: 0.95rem; margin: 0 0 10px; font-weight: 620; }
   .up ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
@@ -316,6 +320,7 @@
       <span><i class="sw vrbo"></i> Vrbo</span>
       <span><i class="sw direct"></i> Direct</span>
       <span><i class="sw owner"></i> Owner</span>
+      <span><i class="sw blocked"></i> Unavailable</span>
     </div>
   </section>
 
@@ -340,6 +345,9 @@
     { start: "2026-12-30", end: "2027-01-03", ch: "airbnb" },
     { start: "2027-03-22", end: "2027-03-29", ch: "vrbo" }
   ];
+
+  // Unavailable / manually blocked days (owner block, maintenance, etc.). Demo: the 19th and 20th.
+  var UNAVAIL = ["2026-11-19", "2026-11-20"];
 
   var MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   var CH_NAME = { airbnb: "Airbnb", vrbo: "Vrbo", direct: "Direct", owner: "Owner" };
@@ -409,6 +417,7 @@
       cell.className = "cell";
       if (d.getMonth() !== mo) cell.classList.add("out");
       if (key === todayStr) cell.classList.add("today");
+      if (UNAVAIL.indexOf(key) > -1) cell.classList.add("blocked");
 
       var daySegs = segs[key] || [];
       var html = "";
