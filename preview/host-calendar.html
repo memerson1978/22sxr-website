@@ -153,55 +153,80 @@
   .grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
+    gap: 3px;
   }
   .cell {
     position: relative;
     aspect-ratio: 1 / 1;
     border-radius: 9px;
-    border: 1px solid transparent;
-    padding: 5px 6px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    font-variant-numeric: tabular-nums;
+    padding: 4px 7px;
     min-width: 0;
+    overflow: visible;
   }
-  .cell.pad { background: transparent; }
-  .cell .num { font-size: 0.82rem; font-weight: 550; }
-  .cell.out .num { color: color-mix(in srgb, var(--muted) 60%, transparent); }
+  .cell .num {
+    position: relative;
+    z-index: 2;
+    font-size: 0.8rem;
+    font-weight: 550;
+    font-variant-numeric: tabular-nums;
+  }
+  .cell.out .num { color: color-mix(in srgb, var(--muted) 55%, transparent); }
   .cell.today .num {
     background: var(--today);
     color: var(--bg);
-    width: 1.5em; height: 1.5em;
+    width: 1.55em; height: 1.55em;
     display: inline-flex; align-items: center; justify-content: center;
     border-radius: 50%;
     font-weight: 650;
   }
-  /* a booked night fills with the channel's soft colour; the left edge carries the channel bar */
-  .cell.booked { font-weight: 550; }
-  .cell.booked.airbnb { background: var(--airbnb-soft); }
-  .cell.booked.vrbo { background: var(--vrbo-soft); }
-  .cell.booked.direct { background: var(--direct-soft); }
-  .cell.booked.owner { background: var(--owner-soft); }
-  .cell.checkin { border-top-left-radius: 9px; border-bottom-left-radius: 9px; }
-  .cell.checkin::before {
+  /* Each stay is a bar that starts mid-cell on the arrival day (afternoon) and ends
+     mid-cell on the departure day (morning). So a changeover day shows the tail of one
+     booking in its left half and the head of the next in its right half, with a gap
+     between — exactly where the clean happens. */
+  .seg {
+    position: absolute;
+    left: -2px; right: -2px;
+    top: 40%; height: 40%;
+    z-index: 1;
+  }
+  .seg.full { border-radius: 4px; }
+  /* the mid-cell end comes to a slight arrow tip (clip-path); the outer side stays
+     square so the bar runs on into the next day's cell */
+  .seg.start {
+    left: calc(50% + 1px);
+    border-radius: 0 4px 4px 0;
+    clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%);
+  }
+  .seg.end {
+    right: calc(50% + 1px);
+    border-radius: 4px 0 0 4px;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%);
+  }
+  .seg.airbnb { background: var(--airbnb-soft); }
+  .seg.vrbo { background: var(--vrbo-soft); }
+  .seg.direct { background: var(--direct-soft); }
+  .seg.owner { background: var(--owner-soft); }
+  /* a solid channel-coloured wedge fills the arrow tip, marking the changeover point */
+  .seg.start::before, .seg.end::before {
     content: "";
     position: absolute;
-    left: 0; top: 10%; bottom: 10%;
-    width: 3px; border-radius: 3px;
+    top: 0; bottom: 0; width: 11px;
   }
-  .cell.checkin.airbnb::before { background: var(--airbnb); }
-  .cell.checkin.vrbo::before { background: var(--vrbo); }
-  .cell.checkin.direct::before { background: var(--direct); }
-  .cell.checkin.owner::before { background: var(--owner); }
+  .seg.start::before { left: 0; }
+  .seg.end::before { right: 0; }
+  .seg.start.airbnb::before, .seg.end.airbnb::before { background: var(--airbnb); }
+  .seg.start.vrbo::before, .seg.end.vrbo::before { background: var(--vrbo); }
+  .seg.start.direct::before, .seg.end.direct::before { background: var(--direct); }
+  .seg.start.owner::before, .seg.end.owner::before { background: var(--owner); }
   .tag {
-    font-size: 0.6rem;
-    font-weight: 650;
+    position: absolute;
+    right: 7px; bottom: 5px;
+    z-index: 2;
+    font-size: 0.55rem;
+    font-weight: 700;
     letter-spacing: 0.02em;
     text-transform: uppercase;
-    align-self: flex-start;
-    line-height: 1.1;
+    line-height: 1;
   }
   .tag.airbnb { color: var(--airbnb); }
   .tag.vrbo { color: var(--vrbo); }
@@ -335,15 +360,21 @@
   var state = { view: new Date(), bookings: [] };
   state.view.setDate(1);
 
-  // night map: every booked night (check-in up to the night before checkout)
-  function nightInfo(bookings) {
+  // Draw each stay as a bar from midday on the arrival day to midday on the departure
+  // day. A day can hold the "end" of one booking (left half) and the "start" of the
+  // next (right half); a mid-stay day is a single "full" bar.
+  function buildSegs(bookings) {
     var map = {};
+    function push(key, seg) { (map[key] = map[key] || []).push(seg); }
     bookings.forEach(function(b){
-      var d = parseDate(b.start), end = parseDate(b.end);
-      var first = true;
-      while (d < end) {
-        map[ymd(d)] = { ch: b.ch, checkin: first };
-        first = false;
+      var ci = parseDate(b.start), co = parseDate(b.end);
+      if (co <= ci) return;
+      var ciKey = ymd(ci), coKey = ymd(co), d = new Date(ci);
+      while (d <= co) {
+        var key = ymd(d);
+        if (key === ciKey) push(key, { type: "start", ch: b.ch });
+        else if (key === coKey) push(key, { type: "end", ch: b.ch });
+        else push(key, { type: "full", ch: b.ch });
         d.setDate(d.getDate()+1);
       }
     });
@@ -353,7 +384,7 @@
   function render() {
     var y = state.view.getFullYear(), mo = state.view.getMonth();
     document.getElementById("monthLabel").textContent = MONTHS[mo] + " " + y;
-    var nights = nightInfo(state.bookings);
+    var segs = buildSegs(state.bookings);
     var todayStr = ymd(new Date());
 
     var first = new Date(y, mo, 1);
@@ -367,22 +398,18 @@
       var key = ymd(d);
       var cell = document.createElement("div");
       cell.className = "cell";
-      var inMonth = d.getMonth() === mo;
-      if (!inMonth) cell.classList.add("out");
-      var info = nights[key];
-      if (info) {
-        cell.classList.add("booked", info.ch);
-        if (info.checkin) cell.classList.add("checkin", info.ch);
-      }
+      if (d.getMonth() !== mo) cell.classList.add("out");
       if (key === todayStr) cell.classList.add("today");
 
-      var tag = (info && info.checkin)
-        ? '<span class="tag ' + info.ch + '">' + CH_NAME[info.ch] + '</span>'
-        : '<span class="tag">&nbsp;</span>';
-      cell.innerHTML = tag + '<span class="num">' + d.getDate() + '</span>';
+      var daySegs = segs[key] || [];
+      var html = "";
+      daySegs.forEach(function(s){ html += '<div class="seg ' + s.type + ' ' + s.ch + '"></div>'; });
+      html += '<span class="num">' + d.getDate() + '</span>';
+      var start = daySegs.filter(function(s){ return s.type === "start"; })[0];
+      if (start) html += '<span class="tag ' + start.ch + '">' + CH_NAME[start.ch] + '</span>';
+      cell.innerHTML = html;
       grid.appendChild(cell);
     }
-    // trim a trailing all-blank 6th week
     renderUpcoming();
   }
 
@@ -422,7 +449,7 @@
   render();
   setStatus(true, "Showing the built-in snapshot…");
   document.getElementById("foot").textContent =
-    "Reads the live feed published by the hourly job. Dates only — guest names and prices stay in the private booking sheet.";
+    "Each bar runs from midday on the arrival day to midday on the departure day, so a changeover day shows one booking ending and the next starting, with the clean in between. Reads the live feed published by the hourly job. Dates only — guest names and prices stay in the private booking sheet.";
 
   fetch(FEED, { cache: "no-store" })
     .then(function(r){ if (!r.ok) throw new Error(r.status); return r.text(); })
