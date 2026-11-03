@@ -138,8 +138,9 @@
   .dow {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 4px;
-    margin-bottom: 4px;
+    gap: 1px;
+    margin-bottom: 6px;
+    padding: 0 2px;
   }
   .dow span {
     text-align: center;
@@ -150,19 +151,26 @@
     color: var(--muted);
     padding: 2px 0;
   }
+  /* single-line grid: the container's colour shows through 1px gaps as the grid lines,
+     so every day sits in its own square cell */
   .grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 3px;
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
   }
   .cell {
     position: relative;
     aspect-ratio: 1 / 1;
-    border-radius: 9px;
+    background: var(--surface);
     padding: 4px 7px;
     min-width: 0;
-    overflow: visible;
+    overflow: hidden;
   }
+  .cell.out { background: color-mix(in srgb, var(--surface) 55%, var(--bg)); }
   .cell .num {
     position: relative;
     z-index: 2;
@@ -183,23 +191,24 @@
      mid-cell on the departure day (morning). So a changeover day shows the tail of one
      booking in its left half and the head of the next in its right half, with a gap
      between — exactly where the clean happens. */
+  /* the booking bar sits in the lower half of the cell, below the date number */
   .seg {
     position: absolute;
-    left: -2px; right: -2px;
-    top: 40%; height: 40%;
+    left: 0; right: 0;
+    top: 46%; height: 34%;
     z-index: 1;
   }
-  .seg.full { border-radius: 4px; }
-  /* the mid-cell end comes to a slight arrow tip (clip-path); the outer side stays
-     square so the bar runs on into the next day's cell */
+  .seg.full { border-radius: 3px; }
+  /* the mid-cell end comes to a slight arrow tip (clip-path); the outer side runs to
+     the cell edge so a multi-day stay reads as one ribbon across the grid */
   .seg.start {
-    left: calc(50% + 1px);
-    border-radius: 0 4px 4px 0;
+    left: calc(50% + 2px);
+    border-radius: 0 3px 3px 0;
     clip-path: polygon(7px 0, 100% 0, 100% 100%, 7px 100%, 0 50%);
   }
   .seg.end {
-    right: calc(50% + 1px);
-    border-radius: 4px 0 0 4px;
+    right: calc(50% + 2px);
+    border-radius: 3px 0 0 3px;
     clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%);
   }
   .seg.airbnb { background: var(--airbnb-soft); }
