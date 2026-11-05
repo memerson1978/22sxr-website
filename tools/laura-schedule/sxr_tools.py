@@ -40,10 +40,7 @@ LAURA_FIELDS = ["arrive", "depart", "name", "party", "dogs", "notes"]
 OPENINGS = ["I hope you're well and having a good week.", "I hope all is well with you.",
             "I hope you've had a lovely weekend.", "Hope you're keeping well!",
             "I hope you're having a good week so far."]
-CLOSINGS = ["Many thanks, and thank you for keeping everything looking so good.",
-            "Thanks so much, Laura. We really appreciate everything you do.",
-            "Thank you as always for looking after the house so well.",
-            "With many thanks and best wishes."]
+CLOSINGS = ["With many thanks and best wishes."]  # plain sign off only (Mark, 05/11/2026)
 
 
 # ---------------------------------------------------------------- dates and words
@@ -303,7 +300,9 @@ def check(sheet, state, today, weekly_day=None, now_time=None):
             kind = "waiting"
     email = None
     if kind not in ("none", "waiting"):
-        o = OPENINGS[rev % len(OPENINGS)]
+        # the weekend opening only reads right early in the week
+        opens = [x for x in OPENINGS if "weekend" not in x or today.weekday() in (0, 1)]
+        o = opens[rev % len(opens)]
         cl = CLOSINGS[rev % len(CLOSINGS)]
         in_update = brand_new + [c for p, c in changed] + came_in
         dl = dogs_line(in_update)
