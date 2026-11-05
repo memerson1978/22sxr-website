@@ -40,8 +40,7 @@ LAURA_FIELDS = ["arrive", "depart", "name", "party", "dogs", "notes"]
 OPENINGS = ["I hope you're well and having a good week.", "I hope all is well with you.",
             "I hope you've had a lovely weekend.", "Hope you're keeping well!",
             "I hope you're having a good week so far."]
-CLOSINGS = ["Thank you as ever for all your hard work. The guests always comment on how lovely the house is.",
-            "Many thanks, and thank you for keeping everything looking so good.",
+CLOSINGS = ["Many thanks, and thank you for keeping everything looking so good.",
             "Thanks so much, Laura. We really appreciate everything you do.",
             "Thank you as always for looking after the house so well.",
             "With many thanks and best wishes."]
