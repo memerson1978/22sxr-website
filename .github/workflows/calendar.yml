@@ -52,6 +52,7 @@ jobs:
           AIRBNB_ICS_URL: ${{ secrets.AIRBNB_ICS_URL }}
           VRBO_ICS_URL: ${{ secrets.VRBO_ICS_URL }}
           SIMPLYOWNERS_ICS_URL: ${{ secrets.SIMPLYOWNERS_ICS_URL }}
+          DIRECT_FEED_URL: ${{ secrets.DIRECT_FEED_URL }}
           TZ: Europe/London
         run: python3 scripts/build_calendar.py
 

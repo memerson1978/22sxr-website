@@ -42,7 +42,12 @@ SOURCES = {
     "airbnb": "AIRBNB_ICS_URL",
     "vrbo": "VRBO_ICS_URL",
     "simplyowners": "SIMPLYOWNERS_ICS_URL",
+    # Direct bookings held by the booking engine (Google Apps Script): dates only.
+    "engine": "DIRECT_FEED_URL",
 }
+# The engine feed says it was read properly (X-SXR-OK:1), so an empty feed there is real (a release or
+# cancellation) and is accepted, unlike an empty platform feed.
+CONFIRMED_EMPTY = "X-SXR-OK:1"
 
 
 def today() -> dt.date:
@@ -167,8 +172,10 @@ def get_source(source: str, env: str, day: dt.date, now: str) -> tuple[list[dict
     try:
         if not url:
             raise RuntimeError(f"{env} is not set")
-        events = parse_ics(fetch(url), source)
-        if cached and future(cached["events"], day) and not future(events, day):
+        text = fetch(url)
+        events = parse_ics(text, source)
+        trusted_empty = source == "engine" and CONFIRMED_EMPTY in text
+        if cached and future(cached["events"], day) and not future(events, day) and not trusted_empty:
             raise RuntimeError("feed returned no future bookings but the last good copy had some")
         save_cache(source, events, now, cached)
         status.update(ok=True, bookings=len(future(events, day)))
@@ -241,7 +248,8 @@ def main() -> int:
     for source, env in SOURCES.items():
         feeds[source], st = get_source(source, env, day, now)
         statuses.append(st)
-    direct = read_direct()
+    # Direct bookings: the engine's feed plus any added by hand in data/direct-bookings.csv.
+    direct = read_direct() + [dict(e, source="direct") for e in feeds["engine"]]
     keep_from = day - dt.timedelta(days=90)   # drop old history from the feeds
 
     def recent(evs):
