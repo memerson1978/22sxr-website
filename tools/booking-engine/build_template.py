@@ -105,7 +105,7 @@ left, right = layout_table([92, 86])
 p = para(left)
 p.add_run().add_picture(sys.argv[1] if len(sys.argv) > 1 else "waves.png", width=Mm(14))
 run(p, "   22 Saxonbury Road", 19, font=DISPLAY)
-para(left, "Southbourne, Dorset", 8.6, color=INK2, before=1).paragraph_format.left_indent = Mm(17.5)
+para(left, "Southbourne, Dorset, BH6 5NB", 8.6, color=INK2, before=1).paragraph_format.left_indent = Mm(21.2)
 for i, (t, b) in enumerate([("Bournepad Ltd", True), ("Foxlea, The Mount, Barley, Royston, Hertfordshire SG8 8JH", False),
                             ("Mark: 07932 712565   {{second_contact}}", False), ("stay@22sxr.co.uk   www.22sxr.co.uk", False)]):
     para(right, t, 8, bold=b, color=INK if b else INK2, align=WD_ALIGN_PARAGRAPH.RIGHT, after=1)
@@ -170,7 +170,7 @@ para(right, "If you need to cancel", 11.5, color=TIDE, font=DISPLAY, after=2)
 para(right, "Please tell us in writing. Four months or more before arrival, we refund everything you have paid, less a £25 admin fee. "
             "From four months to six weeks before arrival, the deposit is kept. Within six weeks of arrival, all payments are kept. "
             "If we manage to relet the dates, we may make a partial refund at our discretion, as set out in our terms.", after=5)
-para(right, "We strongly recommend taking out travel insurance now that you have booked.", bold=True)
+para(right, "We recommend taking out travel insurance now that you have booked.", bold=True)
 
 # ---------------------------------------------------------------- next steps
 para(doc, "What happens next", 11.5, color=TIDE, font=DISPLAY, before=9, after=3)
